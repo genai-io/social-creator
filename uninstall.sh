@@ -1,21 +1,32 @@
 #!/usr/bin/env bash
 # social-creator — remove the persona and disable it.
 #
-# Usage:
-#   ./uninstall.sh              # remove from ./.san (project scope)
-#   ./uninstall.sh --user       # remove from ~/.san (user scope)
-#   ./uninstall.sh --dir <path> # remove from <path>/.san
+# Local:   ./uninstall.sh [--user] [--dir <path>]
+# Remote:  curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/uninstall.sh | bash
+#          curl -fsSL .../uninstall.sh | bash -s -- --user
+#
+# Default scope is the current project (<cwd>/.san).
 set -euo pipefail
 
 PERSONA="social-creator"
+
+usage() {
+  cat <<EOF
+Usage: uninstall.sh [--user] [--dir <path>]
+  --user        remove from ~/.san (user scope)
+  --dir <path>  remove from <path>/.san
+  (default: current project, ./.san)
+EOF
+}
+
 SCOPE="project"
 BASE="$PWD"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --user)    SCOPE="user"; shift ;;
     --dir)     BASE="$2"; shift 2 ;;
-    -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
-    *)         echo "unknown arg: $1" >&2; exit 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *)         echo "unknown arg: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 

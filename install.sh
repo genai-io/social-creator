@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
 # social-creator — install the persona and enable it.
 #
-# Usage:
-#   ./install.sh                # install into ./.san (project scope) and enable
-#   ./install.sh --user         # install into ~/.san (user scope)
-#   ./install.sh --dir <path>   # install into <path>/.san
+# Local:   ./install.sh [--user] [--dir <path>]
+# Remote:  curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/install.sh | bash
+#          curl -fsSL .../install.sh | bash -s -- --user
 #
-# Effects:
-#   1. Copy persona/ → <confdir>/personas/social-creator/
-#   2. Enable it by setting "persona": "social-creator" in <confdir>/settings.json
+# Default scope is the current project (<cwd>/.san). --user installs to
+# ~/.san; --dir <path> targets <path>/.san.
 set -euo pipefail
 
 PERSONA="social-creator"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC="$SCRIPT_DIR/persona"
+REPO_URL="${SOCIAL_CREATOR_REPO:-https://github.com/genai-io/social-creator.git}"
+REF="${SOCIAL_CREATOR_REF:-main}"
+
+usage() {
+  cat <<EOF
+Usage: install.sh [--user] [--dir <path>]
+  --user        install into ~/.san (user scope)
+  --dir <path>  install into <path>/.san
+  (default: current project, ./.san)
+EOF
+}
 
 SCOPE="project"
 BASE="$PWD"
@@ -21,8 +28,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --user)    SCOPE="user"; shift ;;
     --dir)     BASE="$2"; shift 2 ;;
-    -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
-    *)         echo "unknown arg: $1" >&2; exit 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *)         echo "unknown arg: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
@@ -32,11 +39,22 @@ else
   CONFDIR="$BASE/.san"
 fi
 
-if [ ! -d "$SRC" ]; then
-  echo "error: persona source not found at $SRC" >&2
-  echo "run this script from the social-creator repo (it needs ./persona/)." >&2
-  exit 3
+# Resolve the persona source: a local ./persona next to the script when run
+# from a checkout, otherwise clone the repo (the `curl | bash` path).
+SRC=""
+if [ -n "${BASH_SOURCE:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  [ -d "$here/persona" ] && SRC="$here/persona"
 fi
+if [ -z "$SRC" ]; then
+  command -v git >/dev/null 2>&1 || { echo "error: git is required for remote install" >&2; exit 3; }
+  TMP="$(mktemp -d)"
+  trap 'rm -rf "$TMP"' EXIT
+  echo "→ fetching $PERSONA@$REF"
+  git clone --depth 1 --branch "$REF" --quiet "$REPO_URL" "$TMP/src"
+  SRC="$TMP/src/persona"
+fi
+[ -d "$SRC" ] || { echo "error: persona source not found at $SRC" >&2; exit 3; }
 
 DEST="$CONFDIR/personas/$PERSONA"
 mkdir -p "$CONFDIR/personas"
@@ -72,9 +90,8 @@ cat <<EOF
 
 ✓ social-creator installed & enabled ($SCOPE scope)
   Persona:  $DEST
-  Enabled:  $SETTINGS  → "persona": "$PERSONA"
+  Enabled:  $SETTINGS  →  "persona": "$PERSONA"
 
 Start san in this directory and the persona is active. Switch anytime with:
-  /persona $PERSONA          # activate
-  /persona default           # back to built-in San
+  /persona $PERSONA      (activate)   ·   /persona default   (back to built-in San)
 EOF

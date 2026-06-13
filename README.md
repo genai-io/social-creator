@@ -22,17 +22,27 @@ It overrides only the **identity** and **behavior** parts of San's system
 prompt — San's built-in safety / tool / git rules stay in force (there is no
 `rules.md`).
 
-## Install (project scope by default)
+## One-line install (project scope by default)
+
+**macOS / Linux**
 
 ```bash
-./install.sh             # → ./.san/personas/social-creator  + enables it
-./install.sh --user      # → ~/.san/personas/social-creator  (user scope)
-./install.sh --dir PATH  # → PATH/.san/personas/social-creator
+curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/install.sh | bash -s -- --user
 ```
 
-`install.sh` copies the persona and enables it by setting
-`"persona": "social-creator"` in the target `settings.json` (other keys
-preserved). Then run `san` in that directory and the persona is active.
+**Windows (PowerShell 5.1+)**
+
+```powershell
+irm https://raw.githubusercontent.com/genai-io/social-creator/main/install.ps1 | iex
+# user scope (scriptblock form is needed to pass options):
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/genai-io/social-creator/main/install.ps1))) -User
+```
+
+It copies the persona into `.san/personas/social-creator` and enables it by
+setting `"persona": "social-creator"` in the target `settings.json` (other keys
+preserved). Then run `san` in that directory and the persona is active. Both
+scripts also run from a local checkout: `./install.sh [--user|--dir PATH]`.
 
 Switch by hand anytime:
 
@@ -43,10 +53,22 @@ Switch by hand anytime:
 
 ## Uninstall
 
+**macOS / Linux**
+
 ```bash
-./uninstall.sh           # remove from ./.san and disable (project scope)
-./uninstall.sh --user    # remove from ~/.san
+curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/genai-io/social-creator/main/uninstall.sh | bash -s -- --user
 ```
+
+**Windows**
+
+```powershell
+irm https://raw.githubusercontent.com/genai-io/social-creator/main/uninstall.ps1 | iex
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/genai-io/social-creator/main/uninstall.ps1))) -User
+```
+
+Removes the persona directory and drops the selection (only if it pointed at
+this persona).
 
 ## Requirements
 
