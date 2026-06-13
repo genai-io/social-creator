@@ -15,12 +15,17 @@ persona/
   system/
     identity.md    # who: a senior social-media content creator (社媒主理人)
     behavior.md    # how: align-first workflow + per-platform playbooks
-  settings.json    # description
+  skills/
+    inkpost/       # 文案 → 手绘图文长图 (图解/海报): template + headless-Chrome PNG exporter
+  settings.json    # description + skills: { inkpost: active }
 ```
 
 It overrides only the **identity** and **behavior** parts of San's system
 prompt — San's built-in safety / tool / git rules stay in force (there is no
-`rules.md`).
+`rules.md`) — and bundles the **inkpost** skill, which turns copy into a
+hand-drawn illustrated long-image sized per platform and exports it to PNG
+(needs macOS + Google Chrome). The skill resolves its own directory at runtime,
+so it works whether the persona is installed at project or user scope.
 
 ## One-line install (project scope by default)
 
