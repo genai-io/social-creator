@@ -8,16 +8,18 @@ articles, explainer-video scripts, 小红书 / X posts, and more.
 
 ## What's inside
 
-`persona/` is a San persona:
+This repo **is** the persona — its files sit at the root, and the installers
+copy them into `.san/personas/social-creator/`:
 
 ```
-persona/
-  system/
-    identity.md    # who: a senior social-media content creator (社媒主理人)
-    behavior.md    # how: align-first workflow + per-platform playbooks
-  skills/
-    inkpost/       # 文案 → 手绘图文长图 (图解/海报): template + headless-Chrome PNG exporter
-  settings.json    # description + skills: { inkpost: active }
+system/
+  identity.md    # who: a senior social-media content creator (社媒主理人)
+  behavior.md    # how: align-first workflow + per-platform playbooks
+skills/
+  inkpost/       # 文案 → 手绘图文长图 (图解/海报): template + headless-Chrome PNG exporter
+settings.json    # description + skills: { inkpost: active }
+
+install.sh · install.ps1 · uninstall.sh · uninstall.ps1   # tooling (not copied)
 ```
 
 It overrides only the **identity** and **behavior** parts of San's system

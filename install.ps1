@@ -29,25 +29,29 @@ if ($User) {
     $ConfDir = Join-Path ((Resolve-Path $Dir).Path) '.san'
 }
 
-# Resolve the persona source: a local .\persona next to the script, else clone.
+# Resolve the source root holding the persona files (system\, skills\,
+# settings.json) — the repo root for a checkout, else a fresh clone.
 $Tmp = $null
-if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot 'persona'))) {
-    $Src = Join-Path $PSScriptRoot 'persona'
+if ($PSScriptRoot -and (Test-Path (Join-Path $PSScriptRoot 'settings.json'))) {
+    $SrcRoot = $PSScriptRoot
 } else {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Fail 'git is required for remote install' }
     $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('social-creator-' + [System.Guid]::NewGuid().ToString('N'))
     Info "-> fetching $Persona@$Ref"
     git clone --depth 1 --branch $Ref --quiet $RepoUrl $Tmp
-    $Src = Join-Path $Tmp 'persona'
+    $SrcRoot = $Tmp
 }
-if (-not (Test-Path $Src)) { Fail "persona source not found at $Src" }
 
-# Copy the persona into <confdir>\personas\social-creator.
-$Personas = Join-Path $ConfDir 'personas'
-$Dest = Join-Path $Personas $Persona
-New-Item -ItemType Directory -Force -Path $Personas | Out-Null
+# Copy the persona content into <confdir>\personas\social-creator.
+$Dest = Join-Path (Join-Path $ConfDir 'personas') $Persona
 if (Test-Path $Dest) { Remove-Item -Recurse -Force $Dest }
-Copy-Item -Recurse -Force $Src $Dest
+New-Item -ItemType Directory -Force -Path $Dest | Out-Null
+$copied = $false
+foreach ($item in @('system', 'skills', 'settings.json')) {
+    $p = Join-Path $SrcRoot $item
+    if (Test-Path $p) { Copy-Item -Recurse -Force $p $Dest; $copied = $true }
+}
+if (-not $copied) { Fail "no persona content found in $SrcRoot" }
 Info "-> installed persona to $Dest"
 
 # Enable: set "persona" in <confdir>\settings.json, preserving other keys.

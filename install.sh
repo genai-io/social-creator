@@ -39,27 +39,34 @@ else
   CONFDIR="$BASE/.san"
 fi
 
-# Resolve the persona source: a local ./persona next to the script when run
-# from a checkout, otherwise clone the repo (the `curl | bash` path).
-SRC=""
+# Resolve the source root holding the persona files (system/, skills/,
+# settings.json). They sit at the repo root, so use the checkout when run from
+# one, otherwise clone the repo (the `curl | bash` path).
+SRC_ROOT=""
 if [ -n "${BASH_SOURCE:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
   here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  [ -d "$here/persona" ] && SRC="$here/persona"
+  { [ -d "$here/system" ] || [ -f "$here/settings.json" ]; } && SRC_ROOT="$here"
 fi
-if [ -z "$SRC" ]; then
+if [ -z "$SRC_ROOT" ]; then
   command -v git >/dev/null 2>&1 || { echo "error: git is required for remote install" >&2; exit 3; }
   TMP="$(mktemp -d)"
   trap 'rm -rf "$TMP"' EXIT
   echo "→ fetching $PERSONA@$REF"
   git clone --depth 1 --branch "$REF" --quiet "$REPO_URL" "$TMP/src"
-  SRC="$TMP/src/persona"
+  SRC_ROOT="$TMP/src"
 fi
-[ -d "$SRC" ] || { echo "error: persona source not found at $SRC" >&2; exit 3; }
 
 DEST="$CONFDIR/personas/$PERSONA"
-mkdir -p "$CONFDIR/personas"
 rm -rf "$DEST"
-cp -R "$SRC" "$DEST"
+mkdir -p "$DEST"
+copied=0
+for item in system skills settings.json; do
+  if [ -e "$SRC_ROOT/$item" ]; then
+    cp -R "$SRC_ROOT/$item" "$DEST/"
+    copied=1
+  fi
+done
+[ "$copied" = 1 ] || { echo "error: no persona content found in $SRC_ROOT" >&2; exit 3; }
 echo "→ installed persona to $DEST"
 
 # Enable: set "persona" in <confdir>/settings.json, preserving any other keys.
